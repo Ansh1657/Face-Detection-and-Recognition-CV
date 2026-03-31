@@ -200,7 +200,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - VIT Bhopal University - CSE3010 course materials
 
 
-**Ansh Chhibber**
 
 ---
 
+**Ansh Chhibber**
