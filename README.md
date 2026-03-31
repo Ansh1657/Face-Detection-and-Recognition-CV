@@ -1,8 +1,6 @@
-# Face-Detection-and-Recognition-CV
-A command-line Face Detection and Recognition pipeline. Implements Haar Cascades, PCA, and KNN to detect, extract features, and classify faces without GUI dependencies.
 # Face Detection and Recognition Pipeline 👤
+A command-line Face Detection and Recognition pipeline. Implements Haar Cascades, PCA, and KNN to detect, extract features, and classify faces without GUI dependencies.
 
-A command-line face detection and recognition system implementing computer vision fundamentals using Haar Cascades, PCA, and KNN classification.
 
 ## ✨ Features
 
