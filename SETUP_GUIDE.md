@@ -80,7 +80,7 @@ pip install opencv-python --no-cache-dir
 - Check file paths are correct
 
 ## System Requirements
-
+```
 - **RAM:** Minimum 4GB
 - **Storage:** 500MB free space
 - **OS:** Windows 10+, macOS 10.14+, Ubuntu 18.04+
