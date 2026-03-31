@@ -31,30 +31,37 @@ def train_model(dataset_path, model_output):
             if img is None:
                 continue
                 
-            # STUDENT IMPLEMENTATION REQUIRED:
-            # 1. Use face_cascade.detectMultiScale to find faces
-            # 2. Crop the face region
-            # 3. Resize to a fixed dimension (e.g., 100x100)
-            # 4. Flatten the array and append to 'faces'
-            # 5. Append 'current_label' to 'labels'
-            pass
+            detected_faces = face_cascade.detectMultiScale(img, scaleFactor=1.1, minNeighbors=5)
+            
+            for (x, y, w, h) in detected_faces:
+                face_roi = img[y:y+h, x:x+w]
+                resized_face = cv2.resize(face_roi, (100, 100))
+                faces.append(resized_face.flatten())
+                labels.append(current_label)
             
         current_label += 1
 
+    if len(faces) == 0:
+        print("Error: No faces found in the dataset.")
+        return
+
     print("Extracting features and applying dimensionality reduction (PCA)...")
-    # STUDENT IMPLEMENTATION REQUIRED:
-    # 1. Convert 'faces' to a numpy array
-    # 2. Initialize PCA and fit_transform the data
+
+    faces_array = np.array(faces)
+    
+    # Using 0.95 to keep 95% of the variance, or fallback to min samples/features if very small dataset
+    n_comp = min(50, faces_array.shape[0]) if faces_array.shape[0] < 50 else 0.95 
+    pca = PCA(n_components=n_comp)
+    pca_transformed = pca.fit_transform(faces_array)
     
     print("Training KNN Classifier...")
-    # STUDENT IMPLEMENTATION REQUIRED:
-    # 1. Initialize KNeighborsClassifier
-    # 2. Fit the classifier using the PCA-transformed data and 'labels'
+
+    knn = KNeighborsClassifier(n_neighbors=3)
+    knn.fit(pca_transformed, labels)
 
     # Save models to disk
     with open(model_output, 'wb') as f:
-        # pickle.dump({'pca': pca, 'knn': knn, 'label_map': label_map}, f)
-        pass
+        pickle.dump({'pca': pca, 'knn': knn, 'label_map': label_map}, f)
         
     print(f"Training complete. Model saved to {model_output}")
 
@@ -73,18 +80,29 @@ def detect_faces(input_image_path, output_image_path, model_path):
     label_map = model_data['label_map']
 
     img = cv2.imread(input_image_path)
+    if img is None:
+        print(f"Error: Could not load image from {input_image_path}")
+        return
+        
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
     
-    # STUDENT IMPLEMENTATION REQUIRED:
-    # 1. Detect faces in the 'gray' image
-    # 2. Loop through bounding boxes (x, y, w, h)
-    # 3. Crop, resize, and flatten the detected face region
-    # 4. Use pca.transform() on the flattened region
-    # 5. Use knn.predict() to get the label
-    # 6. Retrieve the person's name from label_map
-    # 7. Draw a rectangle and putText on 'img'
+    detected_faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+    
+    for (x, y, w, h) in detected_faces:
+        face_roi = gray[y:y+h, x:x+w]
+        resized_face = cv2.resize(face_roi, (100, 100))
+        flattened_face = resized_face.flatten().reshape(1, -1)
+        
+        transformed_face = pca.transform(flattened_face)
+        predicted_label = knn.predict(transformed_face)[0]
+        
+        person_name = label_map.get(predicted_label, "Unknown")
+        
+        # Draw bounding box and label
+        cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 2)
+        cv2.putText(img, person_name, (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
 
     cv2.imwrite(output_image_path, img)
     print(f"Detection complete. Result saved to {output_image_path}")
